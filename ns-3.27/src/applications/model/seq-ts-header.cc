@@ -57,6 +57,12 @@ SeqTsHeader::GetTs (void) const
   return TimeStep (m_ts);
 }
 
+void
+SeqTsHeader::SetTs(Time t)
+{
+  m_ts = t.GetTimeStep();
+}
+
 TypeId
 SeqTsHeader::GetTypeId (void)
 {

@@ -27,6 +27,7 @@
 #include "ns3/event-id.h"
 #include "ns3/ptr.h"
 #include "ns3/address.h"
+#include "ns3/timer.h"
 #include "packet-loss-counter.h"
 namespace ns3 {
 /**
@@ -100,6 +101,13 @@ private:
   Ptr<Socket> m_socket6; //!< IPv6 Socket
   uint64_t m_received; //!< Number of received packets
   PacketLossCounter m_lossCounter; //!< Lost packet counter
+
+  Timer report;
+  void send_report(void);
+  Address rem_address;
+  double avg_delay;
+  uint64_t last_lost;
+  uint64_t last_received;
 };
 
 } // namespace ns3

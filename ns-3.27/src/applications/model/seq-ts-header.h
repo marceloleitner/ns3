@@ -50,6 +50,7 @@ public:
    * \return the time stamp
    */
   Time GetTs (void) const;
+  void SetTs (Time t);
 
   /**
    * \brief Get the type ID.

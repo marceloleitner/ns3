@@ -68,6 +68,9 @@ UdpServer::UdpServer ()
 {
   NS_LOG_FUNCTION (this);
   m_received=0;
+  avg_delay = 0;
+  last_lost = 0;
+  last_received = 0;
 }
 
 UdpServer::~UdpServer ()
@@ -143,6 +146,26 @@ UdpServer::StartApplication (void)
 
   m_socket6->SetRecvCallback (MakeCallback (&UdpServer::HandleRead, this));
 
+  report.SetFunction(&UdpServer::send_report, this);
+  report.SetDelay(Seconds(1));
+}
+
+void UdpServer::send_report(void)
+{
+  SeqTsHeader seqTs;
+
+  seqTs.SetSeq (GetLost() - last_lost);
+  last_lost = GetLost();
+
+  seqTs.SetTs (Seconds(avg_delay/(m_received-last_received)));
+  avg_delay = 0;
+  last_received = m_received;
+
+  Ptr<Packet> p = Create<Packet> (8+4); // 8+4 : the size of the seqTs header
+  p->AddHeader (seqTs);
+  m_socket->SendTo(p, 0, rem_address);
+
+  report.Schedule();
 }
 
 void
@@ -162,10 +185,15 @@ UdpServer::HandleRead (Ptr<Socket> socket)
   NS_LOG_FUNCTION (this << socket);
   Ptr<Packet> packet;
   Address from;
+  if (!report.IsRunning()) {
+    std::cout << "Starting timer\n";
+    report.Schedule();
+  }
   while ((packet = socket->RecvFrom (from)))
     {
       if (packet->GetSize () > 0)
         {
+	  rem_address = from;
           SeqTsHeader seqTs;
           packet->RemoveHeader (seqTs);
           uint32_t currentSequenceNumber = seqTs.GetSeq ();
@@ -192,6 +220,7 @@ UdpServer::HandleRead (Ptr<Socket> socket)
 
           m_lossCounter.NotifyReceived (currentSequenceNumber);
           m_received++;
+	  avg_delay += (Simulator::Now () - seqTs.GetTs ()).GetSeconds();
         }
     }
 }

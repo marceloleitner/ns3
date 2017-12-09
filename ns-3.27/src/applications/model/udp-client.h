@@ -27,6 +27,7 @@
 #include "ns3/event-id.h"
 #include "ns3/ptr.h"
 #include "ns3/ipv4-address.h"
+#include "ns3/traced-callback.h"
 
 namespace ns3 {
 
@@ -65,6 +66,9 @@ public:
    */
   void SetRemote (Address addr);
 
+  typedef void (*DropCallback)(uint32_t, uint32_t);
+  typedef void (*DelayCallback)(double, double);
+
 protected:
   virtual void DoDispose (void);
 
@@ -87,6 +91,21 @@ private:
   Address m_peerAddress; //!< Remote peer address
   uint16_t m_peerPort; //!< Remote peer port
   EventId m_sendEvent; //!< Event to send the next packet
+
+  void HandleRead (Ptr<Socket> socket);
+  void HandlePacket (Ptr<Packet> packet, Address &from);
+  void adjust_rate(uint32_t drops, double delay);
+  bool stopped;
+  bool enable_fuzzy;
+
+  uint32_t drops_old;
+  uint32_t drops;
+  double delay_old;
+  double delay;
+  double delay_min;
+  double delay_tolerance;
+  TracedCallback<uint32_t, uint32_t> m_ReportDrops;
+  TracedCallback<double, double> m_ReportDelay;
 
 };
 
