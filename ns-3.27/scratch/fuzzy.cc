@@ -79,9 +79,9 @@ main (int argc, char *argv[])
       std::cout << "Too many wifi nodes, no more than 250." << std::endl;
       return 1;
     }
-  if (nWifi < 5)
+  if (nWifi < 1)
     {
-      std::cout << "Too few wifi nodes, must be at least 5." << std::endl;
+      std::cout << "Too few wifi nodes, must be at least 1." << std::endl;
       return 1;
     }
 
@@ -177,14 +177,22 @@ main (int argc, char *argv[])
   sinkApps.Stop (Seconds (100.));
   sources.Get(0)->SetStartTime (Seconds (1.));
   sources.Get(0)->SetStopTime (Seconds (90.));
-  sources.Get(1)->SetStartTime (Seconds (5.));
-  sources.Get(1)->SetStopTime (Seconds (80.));
-  sources.Get(2)->SetStartTime (Seconds (10.));
-  sources.Get(2)->SetStopTime (Seconds (70.));
-  sources.Get(3)->SetStartTime (Seconds (15.));
-  sources.Get(3)->SetStopTime (Seconds (60.));
-  sources.Get(4)->SetStartTime (Seconds (20.));
-  sources.Get(4)->SetStopTime (Seconds (50.));
+  if (nWifi > 1) {
+    sources.Get(1)->SetStartTime (Seconds (5.));
+    sources.Get(1)->SetStopTime (Seconds (80.));
+  }
+  if (nWifi > 2) {
+    sources.Get(2)->SetStartTime (Seconds (10.));
+    sources.Get(2)->SetStopTime (Seconds (70.));
+  }
+  if (nWifi > 3) {
+    sources.Get(3)->SetStartTime (Seconds (15.));
+    sources.Get(3)->SetStopTime (Seconds (60.));
+  }
+  if (nWifi > 4) {
+    sources.Get(4)->SetStartTime (Seconds (20.));
+    sources.Get(4)->SetStopTime (Seconds (50.));
+  }
 
   /* If using more sources than 5 */
   for (uint32_t i = 5; i < nWifi; i++) {
