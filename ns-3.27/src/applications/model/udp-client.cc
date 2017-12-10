@@ -196,7 +196,7 @@ double Fuzzy::eval(double x1, double x2)
 
 	double weight;
 	double a = 0;
-	double STEP = 10;
+	double STEP = 1;
 	double i;
 
 	for (i = out->get_limit_min(); i < out->get_limit_max(); i += STEP) {
@@ -279,17 +279,17 @@ UdpClient::UdpClient ()
   m_sendEvent = EventId ();
   stopped = false;
 
-  FuzzyVarIn *in1 = new FuzzyVarIn("Drops", 0, 50000);
-  FuzzyVarIn *in2 = new FuzzyVarIn("Delay", 0, 1000000); // 1s em us
+  FuzzyVarIn *in1 = new FuzzyVarIn("Drops", 0, 100000);
+  FuzzyVarIn *in2 = new FuzzyVarIn("Delay", 0, 5000000); // 1s em us
   FuzzyVarOut *out = new FuzzyVarOut("Interval", 10, 1000000); // 1s em us
 
   in1->add_set("Pequena perda", -1000, 0, 1000);
   in1->add_set("Média perda", 1000, 2000, 3000);
-  in1->add_set("Alta perda", 3000, 5000, 50000);
+  in1->add_set("Alta perda", 3000, 100000, 150000);
 
   in2->add_set("Pequeno delay", -1000, 0, 1000); // max = 1ms
   in2->add_set("Médio delay", 1000, 100000, 300000);
-  in2->add_set("Alto delay", 300000, 500000, 1000000); // max = 1s
+  in2->add_set("Alto delay", 300000, 5000000, 6000000); // max = 1.5s
 
   out->add_set("Taxa alta", -100, 100, 2000);
   out->add_set("Taxa média", 2000, 100000, 200000);
