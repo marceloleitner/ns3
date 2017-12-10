@@ -252,10 +252,10 @@ UdpClient::adjust_rate(uint32_t drops, double delay)
 	 *   referencial, assim como o delay e delay_old.
 	 */
 	if (!drops) {
-		SetAttribute("Interval", TimeValue(Seconds(m_interval*0.75)));
+		SetAttribute("Interval", TimeValue(Seconds(m_interval.GetSeconds()*0.75)));
 		std::cout << "Speeding up! " << m_interval << "\n";
 	} else {
-		SetAttribute("Interval", TimeValue(Seconds(m_interval*2)));
+		SetAttribute("Interval", TimeValue(Seconds(m_interval.GetSeconds()*2)));
 		std::cout << "Slowing down! " << m_interval << "\n";
 	}
 }
