@@ -41,6 +41,186 @@ NS_LOG_COMPONENT_DEFINE ("UdpClient");
 
 NS_OBJECT_ENSURE_REGISTERED (UdpClient);
 
+#define min(x, y) (x <= y ? x : y)
+#define max(x, y) (x >= y ? x : y)
+
+FuzzyVar::FuzzyVar(std::string _nome, int32_t a, int32_t b)
+{
+	nome = _nome;
+	limits[0] = a;
+	limits[1] = b;
+}
+
+void FuzzyVar::add_set(std::string name, int32_t a, int32_t b, int32_t c)
+{
+	std::array<int32_t, 3> points = { a, b, c };
+
+	sets.insert({name, points});
+}
+
+double FuzzyVar::activation(std::string set, double value)
+{
+	std::array<int32_t, 3> p;
+	double ret;
+
+	if (value < limits[0] || value > limits[1])
+		// Out of scale
+		return 0.0;
+
+	p = sets[set];
+	if (value < p[0] || value > p[2])
+		// Out of the set
+		return 0.0;
+
+	if (value < p[1])
+		ret = (value-p[0])/(p[1]-p[0]);
+	else
+		ret = (value-p[2])/(p[1]-p[2]);
+
+	return ret;
+}
+
+std::vector<std::string> FuzzyVar::get_sets(void)
+{
+	std::vector<std::string> keys;
+
+	for (auto &n: sets)
+		keys.push_back(n.first);
+
+	return keys;
+}
+
+double FuzzyVar::get_limit_min(void) const
+{
+	return limits[0];
+}
+
+double FuzzyVar::get_limit_max(void) const
+{
+	return limits[1];
+}
+
+
+FuzzyVarIn::FuzzyVarIn(std::string _nome, int32_t a, int32_t b):
+	FuzzyVar(_nome, a, b)
+{
+}
+
+
+FuzzyVarOut::FuzzyVarOut(std::string _name, int32_t a, int32_t b):
+	FuzzyVar(_name, a, b)
+{
+}
+
+void FuzzyVarOut::add_set(std::string name, int32_t a, int32_t b, int32_t c)
+{
+	FuzzyVar::add_set(name, a, b, c);
+	u_max.insert({name, 0.0});
+}
+
+double FuzzyVarOut::activation(std::string set, double value)
+{
+	double p;
+
+	p = FuzzyVar::activation(set, value);
+	// Implication rule
+	p = min(get_u_max(set), p);
+
+	return p;
+}
+
+void FuzzyVarOut::reset(std::string set)
+{
+	set_u_max(set, 0.0);
+}
+
+void FuzzyVarOut::reset(void)
+{
+	for (auto &n: sets)
+		reset(n.first);
+}
+
+double FuzzyVarOut::get_u_max(std::string set)
+{
+	return u_max[set];
+}
+
+void FuzzyVarOut::set_u_max(std::string set, double u)
+{
+	u_max[set] = u;
+}
+
+
+Fuzzy::Fuzzy()
+{
+}
+
+void Fuzzy::set_vars(FuzzyVarIn *in1, FuzzyVarIn *in2, FuzzyVarOut *_out)
+{
+	in[0] = in1;
+	in[1] = in2;
+	out = _out;
+}
+
+void Fuzzy::add_rule(std::string in1, std::string in2, std::string out)
+{
+	std::array<std::string, 3> rule = {in1, in2, out};
+	rules.push_back(rule);
+}
+
+double Fuzzy::op_And(double x1, double x2)
+{
+	return min(x1, x2);
+}
+
+double Fuzzy::op_Agg(double x1, double x2)
+{
+	return max(x1, x2);
+}
+
+double Fuzzy::eval(double x1, double x2)
+{
+	x2 *= 1000000.0; // It comes in seconds, we need it in us
+	out->reset();
+
+	for (auto &rule: rules) {
+		double _x1, _x2, r, u_max;
+
+		_x1 = in[0]->activation(rule[0], x1);
+		_x2 = in[0]->activation(rule[1], x2);
+		r = op_And(_x1, _x2);
+
+		u_max = out->get_u_max(rule[2]);
+		out->set_u_max(rule[2], op_Agg(r, u_max));
+	}
+
+	double weight;
+	double a = 0;
+	double STEP = 10;
+	double i;
+
+	for (i = out->get_limit_min(); i < out->get_limit_max(); i += STEP) {
+		double u = 0, u_;
+
+		for (auto &set: out->get_sets()) {
+			u_ = out->activation(set, i);
+			u = op_Agg(u, u_);
+		}
+
+		weight += u*i;
+		a += u;
+	}
+
+	weight = weight/a;
+	weight = max(weight, out->get_limit_min());
+	weight = min(weight, out->get_limit_max());
+	weight /= 1000000.0;
+
+	return weight;
+}
+
+
+
 TypeId
 UdpClient::GetTypeId (void)
 {
@@ -98,6 +278,34 @@ UdpClient::UdpClient ()
   m_socket = 0;
   m_sendEvent = EventId ();
   stopped = false;
+
+  FuzzyVarIn *in1 = new FuzzyVarIn("Drops", 0, 50000);
+  FuzzyVarIn *in2 = new FuzzyVarIn("Delay", 0, 1000000); // 1s em us
+  FuzzyVarOut *out = new FuzzyVarOut("Interval", 10, 1000000); // 1s em us
+
+  in1->add_set("Pequena perda", -1000, 0, 1000);
+  in1->add_set("Média perda", 1000, 2000, 3000);
+  in1->add_set("Alta perda", 3000, 5000, 50000);
+
+  in2->add_set("Pequeno delay", -1000, 0, 1000); // max = 1ms
+  in2->add_set("Médio delay", 1000, 100000, 300000);
+  in2->add_set("Alto delay", 300000, 500000, 1000000); // max = 1s
+
+  out->add_set("Taxa alta", -100, 100, 2000);
+  out->add_set("Taxa média", 2000, 100000, 200000);
+  out->add_set("Taxa baixa", 200000, 500000, 1100000);
+
+  fuzzy.set_vars(in1, in2, out);
+
+  fuzzy.add_rule("Pequena perda", "Pequeno delay", "Taxa alta");
+  fuzzy.add_rule("Pequena perda", "Médio delay", "Taxa média");
+  fuzzy.add_rule("Pequena perda", "Alto delay", "Taxa baixa");
+  fuzzy.add_rule("Média perda", "Pequeno delay", "Taxa média");
+  fuzzy.add_rule("Média perda", "Médio delay", "Taxa média");
+  fuzzy.add_rule("Média perda", "Alto delay", "Taxa baixa");
+  fuzzy.add_rule("Alta perda", "Pequeno delay", "Taxa média");
+  fuzzy.add_rule("Alta perda", "Médio delay", "Taxa baixa");
+  fuzzy.add_rule("Alta perda", "Alto delay", "Taxa baixa");
 }
 
 UdpClient::~UdpClient ()
@@ -251,6 +459,14 @@ UdpClient::adjust_rate(uint32_t drops, double delay)
 	 *   que o permitido naquele momento. Pode servir de
 	 *   referencial, assim como o delay e delay_old.
 	 */
+#if 1
+	double interval = fuzzy.eval(drops, delay);
+	std::cout << "Fuzzy: drops:" << drops << " "
+		<< " delay:" << delay
+		<< " old interval:" << m_interval.GetSeconds()
+		<< " new interval:" << interval << "\n";
+	SetAttribute("Interval", TimeValue(Seconds(interval)));
+#else
 	if (!drops) {
 		SetAttribute("Interval", TimeValue(Seconds(m_interval.GetSeconds()*0.75)));
 		std::cout << "Speeding up! " << m_interval << "\n";
@@ -258,6 +474,7 @@ UdpClient::adjust_rate(uint32_t drops, double delay)
 		SetAttribute("Interval", TimeValue(Seconds(m_interval.GetSeconds()*2)));
 		std::cout << "Slowing down! " << m_interval << "\n";
 	}
+#endif
 }
 
 void

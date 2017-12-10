@@ -28,11 +28,66 @@
 #include "ns3/ptr.h"
 #include "ns3/ipv4-address.h"
 #include "ns3/traced-callback.h"
+#include <unordered_map>
 
 namespace ns3 {
 
 class Socket;
 class Packet;
+
+class FuzzyVar
+{
+public:
+	FuzzyVar(std::string nome, int32_t a, int32_t b);
+	void add_set(std::string name, int32_t a, int32_t b, int32_t c);
+	double activation(std::string set, double value);
+	std::vector<std::string> get_sets(void);
+	double get_limit_min(void) const;
+	double get_limit_max(void) const;
+
+protected:
+	std::string nome;
+	int32_t limits[2];
+	std::unordered_map<std::string, std::array<int32_t, 3>> sets;
+};
+
+class FuzzyVarIn: public FuzzyVar
+{
+public:
+	FuzzyVarIn(std::string nome, int32_t a, int32_t b);
+};
+
+class FuzzyVarOut: public FuzzyVar
+{
+public:
+	FuzzyVarOut(std::string nome, int32_t a, int32_t b);
+	void add_set(std::string name, int32_t a, int32_t b, int32_t c);
+	double activation(std::string set, double value);
+	void reset(std::string set);
+	void reset(void);
+	double get_u_max(std::string set);
+	void set_u_max(std::string set, double u);
+
+private:
+	std::unordered_map<std::string, double> u_max;
+	
+};
+
+class Fuzzy
+{
+public:
+	Fuzzy();
+	void set_vars(FuzzyVarIn *in1, FuzzyVarIn *in2, FuzzyVarOut *out);
+	void add_rule(std::string in1, std::string in2, std::string out);
+	double op_And(double x1, double x2);
+	double op_Agg(double x1, double x2);
+	double eval(double x1, double x2);
+
+private:
+	std::vector<std::array<std::string, 3>> rules;
+	FuzzyVarIn *in[2];
+	FuzzyVarOut *out;
+};
 
 /**
  * \ingroup udpclientserver
@@ -106,7 +161,7 @@ private:
   double delay_tolerance;
   TracedCallback<uint32_t, uint32_t> m_ReportDrops;
   TracedCallback<double, double> m_ReportDelay;
-
+  Fuzzy fuzzy;
 };
 
 } // namespace ns3
