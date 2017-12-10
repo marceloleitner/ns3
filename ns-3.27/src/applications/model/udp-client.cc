@@ -187,7 +187,7 @@ double Fuzzy::eval(double x1, double x2)
 		double _x1, _x2, r, u_max;
 
 		_x1 = in[0]->activation(rule[0], x1);
-		_x2 = in[0]->activation(rule[1], x2);
+		_x2 = in[1]->activation(rule[1], x2);
 		r = op_And(_x1, _x2);
 
 		u_max = out->get_u_max(rule[2]);
