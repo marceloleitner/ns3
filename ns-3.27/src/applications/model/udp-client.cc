@@ -409,7 +409,7 @@ UdpClient::HandleRead (Ptr<Socket> socket)
 		if (packet->GetSize () <= 0)
 			continue;
 
-		if (stopped || m_sent >= m_count)
+		if (stopped || (m_count && m_sent >= m_count))
 			continue;
 
 		HandlePacket(packet, from);
@@ -532,7 +532,7 @@ UdpClient::Send (void)
                                           << peerAddressStringStream.str ());
     }
 
-  if (m_sent < m_count)
+  if (!m_count || m_sent < m_count)
     {
       m_sendEvent = Simulator::Schedule (m_interval, &UdpClient::Send, this);
     }

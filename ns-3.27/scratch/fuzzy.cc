@@ -47,7 +47,7 @@ main (int argc, char *argv[])
   bool tracing = false;
   uint32_t pktsize = 60;
   Time interval = Seconds(0.01);
-  int pktcount = 1000000;
+  int pktcount = 0;
   bool fuzzy = false;
 
   CommandLine cmd;
