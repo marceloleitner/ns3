@@ -292,22 +292,22 @@ UdpClient::UdpClient ()
 
   FuzzyVarIn *in1 = new FuzzyVarIn("Drops", 0, 100000);
   FuzzyVarIn *in2 = new FuzzyVarIn("Delay", 0, 5000000); // 1s em us
-  FuzzyVarOut *out = new FuzzyVarOut("Interval", 10, 1000000); // 1s em us
+  FuzzyVarOut *out = new FuzzyVarOut("Interval", 10, 100000); // 1s em us
 
   in1->add_set("Pequena perda", -1000, 0, 1000);
   in1->add_set("Média perda", 1000, 2000, 3000);
   in1->add_set("Alta perda", 3000, 100000, 150000);
 
-  in2->add_set("Pequeno delay", -1000, 35, 1000); // max = 1ms
-  in2->add_set("Médio delay", 1000, 50000, 100000);
+  in2->add_set("Pequeno delay", -1000, 35, 40000); // max = 1ms
+  in2->add_set("Médio delay", 30000, 80000, 100000);
   in2->add_set("Médio alto delay", 80000, 200000, 350000);
   in2->add_set("Alto delay", 300000, 5000000, 6000000); // max = 1.5s
 
-  out->add_set("Taxa super alta", -100, 50, 500);
-  out->add_set("Taxa alta", 250, 5000, 10000);
-  out->add_set("Taxa média", 5000, 100000, 250000);
-  out->add_set("Taxa baixa", 200000, 500000, 700000);
-  out->add_set("Taxa super baixa", 600000, 800000, 1100000);
+  out->add_set("Taxa super alta", -100, 500, 1000);
+  out->add_set("Taxa alta", 250, 1000, 2000);
+  out->add_set("Taxa média", 1000, 10000, 25000);
+  out->add_set("Taxa baixa", 20000, 50000, 70000);
+  out->add_set("Taxa super baixa", 60000, 80000, 110000);
 
   fuzzy.set_vars(in1, in2, out);
 
