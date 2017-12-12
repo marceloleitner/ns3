@@ -69,6 +69,7 @@ main (int argc, char *argv[])
 		<< "-" << pktsize
 		<< "-" << interval
 		<< "-" << nWifi
+		<< "-" << fuzzy
 		;
   std::string oprefix = _oprefix.str();
 
