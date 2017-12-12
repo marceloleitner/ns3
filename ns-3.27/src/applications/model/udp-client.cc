@@ -262,6 +262,11 @@ UdpClient::GetTypeId (void)
                    BooleanValue (false),
                    MakeBooleanAccessor (&UdpClient::enable_fuzzy),
 		   MakeBooleanChecker ())
+    .AddAttribute ("Simple",
+                   "Enable Simple congestion control.",
+                   BooleanValue (false),
+                   MakeBooleanAccessor (&UdpClient::enable_simple),
+		   MakeBooleanChecker ())
     .AddAttribute ("DelayTolerance",
 		   "How much delay we can have in order to improve throughput",
 		   DoubleValue (0.5),
@@ -440,8 +445,7 @@ UdpClient::HandlePacket (Ptr<Packet> packet, Address &from)
 		"delay_min:" << delay_min << " " <<
 		"\n";
 
-	if (enable_fuzzy)
-		adjust_rate(drops, delay);
+	adjust_rate(drops, delay);
 
 	drops_old = drops;
 	delay_old = delay;
@@ -471,22 +475,23 @@ UdpClient::adjust_rate(uint32_t drops, double delay)
 	 *   que o permitido naquele momento. Pode servir de
 	 *   referencial, assim como o delay e delay_old.
 	 */
-#if 1
-	double interval = fuzzy.eval(drops, delay);
-	std::cout << "Fuzzy: drops:" << drops << " "
-		<< " delay:" << delay
-		<< " old interval:" << m_interval.GetSeconds()
-		<< " new interval:" << interval << "\n";
-	SetAttribute("Interval", TimeValue(Seconds(interval)));
-#else
-	if (!drops) {
-		SetAttribute("Interval", TimeValue(Seconds(m_interval.GetSeconds()*0.75)));
-		std::cout << "Speeding up! " << m_interval << "\n";
-	} else {
-		SetAttribute("Interval", TimeValue(Seconds(m_interval.GetSeconds()*2)));
-		std::cout << "Slowing down! " << m_interval << "\n";
+	if (enable_fuzzy) {
+		double interval = fuzzy.eval(drops, delay);
+
+		std::cout << "Fuzzy: drops:" << drops << " "
+			<< " delay:" << delay
+			<< " old interval:" << m_interval.GetSeconds()
+			<< " new interval:" << interval << "\n";
+		SetAttribute("Interval", TimeValue(Seconds(interval)));
+	} else if (enable_simple) {
+		if (!drops) {
+			SetAttribute("Interval", TimeValue(Seconds(m_interval.GetSeconds()*0.75)));
+			std::cout << "Speeding up! " << m_interval << "\n";
+		} else {
+			SetAttribute("Interval", TimeValue(Seconds(m_interval.GetSeconds()*2)));
+			std::cout << "Slowing down! " << m_interval << "\n";
+		}
 	}
-#endif
 }
 
 void

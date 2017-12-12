@@ -152,6 +152,7 @@ private:
   void adjust_rate(uint32_t drops, double delay);
   bool stopped;
   bool enable_fuzzy;
+  bool enable_simple;
 
   uint32_t drops_old;
   uint32_t drops;

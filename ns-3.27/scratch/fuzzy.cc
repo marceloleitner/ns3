@@ -50,6 +50,7 @@ main (int argc, char *argv[])
   Time length = Seconds(100);
   int pktcount = 0;
   bool fuzzy = false;
+  bool simple = false;
 
   CommandLine cmd;
   cmd.AddValue ("nWifi", "Number of wifi STA devices", nWifi);
@@ -60,6 +61,7 @@ main (int argc, char *argv[])
   cmd.AddValue ("interval", "Interval between packets", interval);
   cmd.AddValue ("length", "Simulation length", length);
   cmd.AddValue ("fuzzy", "Enable Fuzzy control", fuzzy);
+  cmd.AddValue ("simple", "Enable Simple control", simple);
 
   cmd.Parse (argc,argv);
   std::ostringstream _oprefix;
@@ -70,6 +72,7 @@ main (int argc, char *argv[])
 		<< "-" << interval
 		<< "-" << nWifi
 		<< "-" << fuzzy
+		<< "-" << simple
 		;
   std::string oprefix = _oprefix.str();
 
@@ -85,6 +88,11 @@ main (int argc, char *argv[])
   if (nWifi < 1)
     {
       std::cout << "Too few wifi nodes, must be at least 1." << std::endl;
+      return 1;
+    }
+  if (fuzzy && simple)
+    {
+      std::cout << "Cannot use Fuzzy and Simple at the same time." << std::endl;
       return 1;
     }
 
@@ -130,9 +138,9 @@ main (int argc, char *argv[])
                                  "GridWidth", UintegerValue (3),
                                  "LayoutType", StringValue ("RowFirst"));
 
-  //mobility.SetMobilityModel ("ns3::RandomWalk2dMobilityModel",
-  //                           "Bounds", RectangleValue (Rectangle (-50, 50, -50, 50)));
-  mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+  mobility.SetMobilityModel ("ns3::RandomWalk2dMobilityModel",
+                             "Bounds", RectangleValue (Rectangle (-50, 50, -50, 50)));
+  //mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
   mobility.Install (wifiStaNodes);
 
   mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
@@ -162,6 +170,7 @@ main (int argc, char *argv[])
     udpClientHelper.SetAttribute("MaxPackets", UintegerValue(pktcount));
     udpClientHelper.SetAttribute("PacketSize", UintegerValue(pktsize));
     udpClientHelper.SetAttribute("Fuzzy", BooleanValue(fuzzy));
+    udpClientHelper.SetAttribute("Simple", BooleanValue(simple));
     tmp = udpClientHelper.Install (wifiStaNodes.Get (i));
     sources.Add (tmp);
 
