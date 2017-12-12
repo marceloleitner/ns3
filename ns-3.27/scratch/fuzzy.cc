@@ -47,6 +47,7 @@ main (int argc, char *argv[])
   bool tracing = false;
   uint32_t pktsize = 60;
   Time interval = Seconds(0.01);
+  Time length = Seconds(100);
   int pktcount = 0;
   bool fuzzy = false;
 
@@ -57,6 +58,7 @@ main (int argc, char *argv[])
   cmd.AddValue ("pktsize", "Packet size", pktsize);
   cmd.AddValue ("pktcount", "Packet count that a client will send", pktcount);
   cmd.AddValue ("interval", "Interval between packets", interval);
+  cmd.AddValue ("length", "Simulation length", length);
   cmd.AddValue ("fuzzy", "Enable Fuzzy control", fuzzy);
 
   cmd.Parse (argc,argv);
@@ -174,7 +176,7 @@ main (int argc, char *argv[])
     sinkApps.Add (tmp);
   }
   sinkApps.Start (Seconds (0.));
-  sinkApps.Stop (Seconds (100.));
+  sinkApps.Stop (length);
   sources.Get(0)->SetStartTime (Seconds (1.));
   sources.Get(0)->SetStopTime (Seconds (90.));
   if (nWifi > 1) {
@@ -205,7 +207,7 @@ main (int argc, char *argv[])
 
   Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 
-  Simulator::Stop (Seconds (100.0));
+  Simulator::Stop (length);
 
   std::ostringstream path;
 #if 1
