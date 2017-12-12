@@ -292,22 +292,23 @@ UdpClient::UdpClient ()
 
   FuzzyVarIn *in1 = new FuzzyVarIn("Drops", 0, 100000);
   FuzzyVarIn *in2 = new FuzzyVarIn("Delay", 0, 8000000); // 8s em us
-  FuzzyVarOut *out = new FuzzyVarOut("Interval", 10, 100000); // 100ms em us
+  FuzzyVarOut *out = new FuzzyVarOut("Interval", 10, 130000); // 100ms em us
 
-  in1->add_set("Pequena perda", -1000, 0, 1000);
-  in1->add_set("Média perda", 1000, 2000, 3000);
-  in1->add_set("Alta perda", 3000, 100000, 150000);
+  in1->add_set("Pequena perda", -1000, 0, 50);
+  in1->add_set("Média perda", 35, 125, 250);
+  in1->add_set("Alta perda", 175, 1000, 150000);
 
   in2->add_set("Pequeno delay", -1000, 35, 40000);
   in2->add_set("Médio delay", 20000, 75000, 100000);
-  in2->add_set("Médio alto delay", 70000, 135000, 200000);
-  in2->add_set("Alto delay", 150000, 5000000, 9000000);
+  in2->add_set("Médio alto delay", 70000, 135000, 180000);
+  in2->add_set("Alto delay", 140000, 350000, 500000);
+  in2->add_set("Muito alto delay", 450000, 600000, 9000000);
 
   out->add_set("Taxa super alta", -100, 500, 1000);
   out->add_set("Taxa alta", 250, 1000, 2000);
-  out->add_set("Taxa média", 1000, 7000, 14000);
-  out->add_set("Taxa baixa", 9000, 30000, 70000);
-  out->add_set("Taxa super baixa", 60000, 80000, 110000);
+  out->add_set("Taxa média", 1000, 7000, 15000);
+  out->add_set("Taxa baixa", 8000, 50000, 90000);
+  out->add_set("Taxa super baixa", 40000, 110000, 150000);
 
   fuzzy.set_vars(in1, in2, out);
 
@@ -315,14 +316,17 @@ UdpClient::UdpClient ()
   fuzzy.add_rule("Pequena perda", "Médio delay",      "Taxa alta");
   fuzzy.add_rule("Pequena perda", "Médio alto delay", "Taxa média");
   fuzzy.add_rule("Pequena perda", "Alto delay",       "Taxa baixa");
+  fuzzy.add_rule("Pequena perda", "Muito alto delay", "Taxa baixa");
   fuzzy.add_rule("Média perda",   "Pequeno delay",    "Taxa alta");
   fuzzy.add_rule("Média perda",   "Médio delay",      "Taxa média");
   fuzzy.add_rule("Média perda",   "Médio alto delay", "Taxa baixa");
   fuzzy.add_rule("Média perda",   "Alto delay",       "Taxa super baixa");
+  fuzzy.add_rule("Média perda",   "Muito alto delay", "Taxa super baixa");
   fuzzy.add_rule("Alta perda",    "Pequeno delay",    "Taxa média");
   fuzzy.add_rule("Alta perda",    "Médio delay",      "Taxa baixa");
   fuzzy.add_rule("Alta perda",    "Médio alto delay", "Taxa super baixa");
   fuzzy.add_rule("Alta perda",    "Alto delay",       "Taxa super baixa");
+  fuzzy.add_rule("Alta perda",    "Muito alto delay", "Taxa super baixa");
 }
 
 UdpClient::~UdpClient ()
