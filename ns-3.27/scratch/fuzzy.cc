@@ -190,19 +190,19 @@ main (int argc, char *argv[])
   sources.Get(0)->SetStartTime (Seconds (1.));
   sources.Get(0)->SetStopTime (Seconds (90.));
   if (nWifi > 1) {
-    sources.Get(1)->SetStartTime (Seconds (5.));
+    sources.Get(1)->SetStartTime (Seconds (5.1));
     sources.Get(1)->SetStopTime (Seconds (80.));
   }
   if (nWifi > 2) {
-    sources.Get(2)->SetStartTime (Seconds (10.));
+    sources.Get(2)->SetStartTime (Seconds (10.2));
     sources.Get(2)->SetStopTime (Seconds (70.));
   }
   if (nWifi > 3) {
-    sources.Get(3)->SetStartTime (Seconds (15.));
+    sources.Get(3)->SetStartTime (Seconds (15.3));
     sources.Get(3)->SetStopTime (Seconds (60.));
   }
   if (nWifi > 4) {
-    sources.Get(4)->SetStartTime (Seconds (20.));
+    sources.Get(4)->SetStartTime (Seconds (20.4));
     sources.Get(4)->SetStopTime (Seconds (50.));
   }
 
